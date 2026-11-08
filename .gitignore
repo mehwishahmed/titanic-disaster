@@ -1,0 +1,13 @@
+# data (don't upload the dataset)
+src/data/
+
+# mac hidden files
+.DS_Store
+
+# virtual environment
+venv/
+.venv/
+
+# python cache
+__pycache__/
+*.pyc
