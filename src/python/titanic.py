@@ -1,74 +1,62 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-print("=== Titanic survival model (Python) ===")
+print("~~Titanic survival model (Python)~~")
 
-# ---------- load the training data ----------
+print("\n#13: Load train.csv")
 train = pd.read_csv("data/train.csv")
-print("\nLoaded train.csv")
 print("Shape:", train.shape)
 print(train.head())
 
-print("\nMissing values in train:")
+print("\n#14: Explore and adjust the data")
+print("Missing values:")
 print(train.isna().sum())
 
-# ---------- clean / adjust the data ----------
-# fill missing ages with the median age
+# fill the missing ages with the median
 age_median = train["Age"].median()
 train["Age"] = train["Age"].fillna(age_median)
-print(f"\nFilled missing Age values with the median age ({age_median})")
+print(f"Filled missing Age with the median ({age_median})")
 
-# turn Sex into a number so the model can use it
+# change the Sex to numbers
 train["Sex"] = train["Sex"].map({"male": 0, "female": 1})
-print("Converted Sex to numbers (male = 0, female = 1)")
+print("Changed Sex to numbers (male = 0, female = 1)")
 
-# pick the features to use
 features = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare"]
-print("Using these features:", features)
-print("Not using Name, Ticket, Cabin, or Embarked (text / lots of missing values)")
+print("Features I'm using:", features)
 
-X_train = train[features]
-y_train = train["Survived"]
+X = train[features]
+y = train["Survived"]
 
-# ---------- build the model ----------
+# test.csv doesn't have Survived, so holding out 20% of train.csv to test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print(f"Split train.csv: {len(X_train)} rows to train, {len(X_test)} rows to test")
+
+print("\n#15: Build the logistic regression model")
 model = LogisticRegression(max_iter=1000)
 model.fit(X_train, y_train)
-print("\nTrained a logistic regression model")
+print("Model trained")
 
-# accuracy on the training set
-train_preds = model.predict(X_train)
-train_acc = accuracy_score(y_train, train_preds)
+print("\n#16: Accuracy on the training set")
+train_acc = accuracy_score(y_train, model.predict(X_train))
 print(f"Training accuracy: {train_acc:.4f}")
 
-# ---------- load the test data ----------
+print("\n#17: Load test.csv and predict")
 test = pd.read_csv("data/test.csv")
-print("\nLoaded test.csv")
 print("Shape:", test.shape)
 
-# clean the test data the same way (using the training median for age)
 test["Age"] = test["Age"].fillna(age_median)
-print(f"Filled missing Age values in test with the training median ({age_median})")
-
-# test has one missing fare, so fill it with the training median fare
 fare_median = train["Fare"].median()
 test["Fare"] = test["Fare"].fillna(fare_median)
-print(f"Filled missing Fare values in test with the training median ({fare_median})")
-
 test["Sex"] = test["Sex"].map({"male": 0, "female": 1})
-print("Converted Sex to numbers in test")
+print("Cleaned test.csv the same way (filled Age and Fare, changed Sex to numbers)")
 
-# predict on the test set
 test_preds = model.predict(test[features])
-print("\nMade predictions on the test set")
-print("Predicted survivors:", test_preds.sum(), "out of", len(test_preds))
+print("Predicted survivors in test.csv:", test_preds.sum(), "out of", len(test_preds))
 
-# ---------- test accuracy ----------
-# test.csv has no Survived column, so compare against gender_submission.csv
-answers = pd.read_csv("data/gender_submission.csv")
-test_acc = accuracy_score(answers["Survived"], test_preds)
-print(f"Test accuracy (compared to gender_submission.csv): {test_acc:.4f}")
-print("Note: gender_submission.csv is Kaggle's example file (all women survive),")
-print("not the real answers, so this shows how close we are to that baseline.")
+print("\n#18: Accuracy on the test set")
+test_acc = accuracy_score(y_test, model.predict(X_test))
+print(f"Test accuracy (on the 20% held out from train.csv): {test_acc:.4f}")
 
-print("\nDone!")
+print("\nTest complete.")
