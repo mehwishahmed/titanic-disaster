@@ -1,48 +1,49 @@
-# Titanic Survival Prediction (Python + R with Docker)
+# MLDS 400 - Titanic Survival Prediction (Python + R with Docker)
 
-This repo builds a logistic regression model that predicts which passengers survived the Titanic. There are two versions, one in **Python** and one in **R**, and each runs inside its own **Docker** container. Each script loads the data, cleans it, trains the model, and prints the training and test accuracy to the terminal.
+This repo builds a logistic regression model that predicts the survival of passengers from the Titanic. There are two versions of these models: one is in **Python** and the other one in **R**. Each of these run inside its own **Docker** container. The basic breakdown of each script is that it loads the data, cleans it, trains the model, and finally, prints the training and test accuracy to the terminal.
 
-The dataset is **not** included in this repo, so you'll need to download it first (step 2 below).
+Note: since the datasets are **not** included in this repo, you will need to download them first before proceeding (detailed in step 2 below).
 
----
+------
 
-## What you need first
+## What you need
 
-- **Docker Desktop**, installed and running (download it from https://www.docker.com/products/docker-desktop/)
-- **Git** (to clone the repo)
-- A free **Kaggle** account (to download the data)
+- **Docker Desktop** installed and running
+- **Git** to clone the repo
+- **Kaggle** account to download the data
 
----
+------
 
 ## Step 1: Clone the repo
 
-Open a terminal and run:
+Open up terminal on your machine and run:
 
 ```bash
 git clone https://github.com/mehwishahmed/titanic-disaster.git
 cd titanic-disaster
 ```
 
-All the commands below should be run from inside this `titanic-disaster` folder.
+(Keep in mind: All commands in terminal should be run from inside the `titanic-disaster` folder.)
 
----
+------
 
 ## Step 2: Download the data
 
-1. Go to https://www.kaggle.com/competitions/titanic/data (you may need to log in and click **Join Competition** / accept the rules first).
-2. Download these three files:
+1. Go to https://www.kaggle.com/competitions/titanic/data (you need to log in/create an account for this).
+
+2. Download these two files in this competition:
    - `train.csv`
    - `test.csv`
-   - `gender_submission.csv`
-3. Create the data folder (it isn't included in the repo):
+
+3. Create the data folder (this isn't included in the repo):
 
    ```bash
    mkdir -p src/data
    ```
 
-4. Move the three CSV files into `src/data/`.
+4. Move the two CSV files into `src/data/`.
 
-Your folder should look like this:
+So now, the folder should look like this:
 
 ```
 titanic-disaster/
@@ -51,8 +52,7 @@ titanic-disaster/
 └── src/
     ├── data/
     │   ├── train.csv
-    │   ├── test.csv
-    │   └── gender_submission.csv
+    │   └── test.csv
     ├── python/
     │   ├── Dockerfile
     │   ├── requirements.txt
@@ -63,63 +63,65 @@ titanic-disaster/
         └── titanic.R
 ```
 
----
+------
 
-## Step 3: Run the Python version
+## Step 3: Run the Python file
 
-Make sure Docker Desktop is open, then run these two commands:
+Ensure Docker Desktop is open, then run these commands in terminal:
 
 ```bash
 docker build -t titanic-python src/python
 docker run --rm -v "$(pwd)/src/data:/app/data" titanic-python
 ```
 
-- The first command builds the Docker image and installs the packages from `requirements.txt` (pandas, numpy, scikit-learn).
-- The second command runs the script. The `-v` part connects your `src/data` folder to the container so the script can read the CSV files.
+What's happening here:
+- The first command is building the Docker image and installing the `requirements.txt` packages.
+- The second command runs the script. In particular, the `-v` is what connects the `src/data` folder to the container so that the script can read the CSV files.
 
----
+------
 
-## Step 4: Run the R version
+## Step 4: Run the R file
+
+Now, we will run the R file. Locate to src/r/titanic.R for reference and run the following commands in terminal:
 
 ```bash
 docker build -t titanic-r src/r
 docker run --rm -v "$(pwd)/src/data:/app/data" titanic-r
 ```
 
-The first build takes a few minutes because it downloads R and installs `dplyr` (from `install_packages.R`). After the first time, it's much faster.
+The first command, which builds the Docker image, will take a couple minutes time because it initiates the download of R and installs `dplyr` from `install_packages.R` for the first time. However, after the first time it's much faster.
 
----
+------
 
-## What you should see
+## What you should see after running both files
 
-Both versions print each step to the terminal:
+Both versions have print statements of each step in the terminal:
 
-1. Loading `train.csv` and showing its shape, first rows, and missing values
-2. The cleaning steps (filling missing Age with the median, converting Sex to numbers)
-3. The features used for the model: `Pclass`, `Sex`, `Age`, `SibSp`, `Parch`, `Fare`
-4. **Training accuracy** (about 0.79–0.80)
-5. Loading `test.csv`, cleaning it the same way (including filling one missing Fare), and making predictions
-6. **Test accuracy** (about 0.94)
-7. `Done!`
+1. Loading `train.csv` and showing its general shape, first rows, and missing values.
+2. The cleaning steps (includes filling missing Age with the median, converting Sex to numbers).
+3. The features used for the model: `Pclass`, `Sex`, `Age`, `SibSp`, `Parch`, `Fare`.
+4. **Training accuracy** (around 0.80).
+5. Loading `test.csv`, cleaning it the same way as train.csv, and making predictions.
+6. **Test accuracy** (about 0.81 in Python, 0.75 in R).
+7. Print `Test complete` as an indication to finish.
 
 ### Note about the test accuracy
 
-`test.csv` doesn't include the `Survived` column, since Kaggle keeps the real answers private. To still measure test accuracy, the scripts compare predictions to `gender_submission.csv`, which is Kaggle's example file that predicts all women survive and all men don't. So the test accuracy shows how closely the model matches that baseline, not its accuracy on the true answers.
+test.csv doesn't have the Survived column, so I couldn't check accuracy on it directly. Instead I split train.csv 80/20 and used the 20% as my test set. The models make predictions on test.csv.
 
----
+## If on Windows
 
-## Windows users
+If a Windows user, here are steps to running this in terminal:
 
-`$(pwd)` works on Mac and Linux. On Windows, replace it in the `docker run` commands:
+`$(pwd)` works on Mac/Linux. On Windows PowerShell, use `${PWD}`
 
-- **PowerShell:** use `${PWD}` → `docker run --rm -v "${PWD}/src/data:/app/data" titanic-python`
-- **Command Prompt:** use `%cd%` → `docker run --rm -v "%cd%/src/data:/app/data" titanic-python`
+```bash
+docker run --rm -v "${PWD}/src/data:/app/data" titanic-python
+```
 
-(Same for `titanic-r`.)
+(Do the same thing for titanic-r.)
 
----
+## Troubleshooting:
 
-## Troubleshooting
-
-- **"Cannot connect to the Docker daemon":** Docker Desktop isn't running. Open it and wait for it to finish starting.
-- **"No such file or directory: data/train.csv":** the CSVs aren't in `src/data/`, or you're not running the command from the `titanic-disaster` folder. Check with `ls src/data`.
+- If Docker says it can't connect -> Docker Desktop probably isn't open.
+- It can't find train.csv or test.csv: make sure the files are in `src/data/` and you're running the commands from the `titanic-disaster` folder.
